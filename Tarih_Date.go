@@ -10,7 +10,7 @@
 * Developer : ibrahimcobani
 *
 *******/
-package TCMBCurrency
+package GOTCMBCurrencyHelper
 
 import (
 	"net/http"
