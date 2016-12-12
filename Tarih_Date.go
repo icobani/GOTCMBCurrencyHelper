@@ -42,8 +42,9 @@ type Currency struct {
 }
 
 func (c *Tarih_Date) GetToday(year string, month string, day string) {
-	resp, _ := http.Get("http://www.tcmb.gov.tr/kurlar/" + year + month + "/" + day + month + year +
-		".xml")
+
+	resp, err := http.Get("http://www.tcmb.gov.tr/kurlar/" + year + month + "/" + day + month + year + ".xml")
+	println(err)
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 
