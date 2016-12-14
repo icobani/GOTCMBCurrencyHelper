@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"encoding/xml"
 	"fmt"
+	"time"
 )
 
 type Tarih_Date struct {
@@ -29,9 +30,9 @@ type Tarih_Date struct {
 
 type Currency struct {
 	Kod             string `xml:"Kod,attr"`
-	CrossOrder      int `xml:"CrossOrder,attr"`
+	CrossOrder      string `xml:"CrossOrder,attr"`
 	CurrencyCode    string `xml:"CurrencyCode,attr"`
-	Unit            int `xml:"Unit"`
+	Unit            string `xml:"Unit"`
 	Isim            string `xml:"Isim"`
 	CurrencyName    string `xml:"CurrencyName"`
 	ForexBuying     string `xml:"ForexBuying"`
@@ -41,21 +42,41 @@ type Currency struct {
 	CrossRateOther  string `xml:"CrossRateOther"`
 }
 
-func (c *Tarih_Date) GetToday(year string, month string, day string) {
+func (c *Tarih_Date) GetToday(CurrencyDate time.Time) {
 
-	resp, err := http.Get("http://www.tcmb.gov.tr/kurlar/" + year + month + "/" + day + month + year + ".xml")
-	println(err)
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
+	for {
+		url := "http://www.tcmb.gov.tr/kurlar/" + CurrencyDate.Format("200601") + "/" + CurrencyDate.Format("02012006") + ".xml"
+		println(url)
+		resp, err := http.Get(url)
+		defer resp.Body.Close()
 
-	tarih := new(Tarih_Date)
+		if resp.StatusCode != http.StatusNotFound {
 
-	xml.Unmarshal(body, &tarih)
-	c = &Tarih_Date{}
-	fmt.Println(tarih.Date, tarih.Bulten_No)
-	fmt.Println("------------------")
-	for _, curr := range tarih.Currency {
-		fmt.Println(curr.Kod, curr.Isim, curr.ForexBuying)
+			body, err2 := ioutil.ReadAll(resp.Body)
+			println(err2 != nil)
+			if err2 != nil {
+				fmt.Println("=>", err2)
+			}
+			tarih := new(Tarih_Date)
+
+
+
+			marshalErr := xml.Unmarshal(body, &tarih)
+			if marshalErr != nil {
+				fmt.Printf("error: %v", marshalErr)
+				return
+			}
+			c = &Tarih_Date{}
+			fmt.Println(tarih.Date, tarih.Bulten_No)
+			fmt.Println("------------------")
+			for _, curr := range tarih.Currency {
+				fmt.Println(curr.Kod, curr.Isim, curr.ForexBuying)
+			}
+			break
+		} else {
+			println(err)
+			CurrencyDate = CurrencyDate.AddDate(0, 0, -1)
+		}
+
 	}
-
 }
