@@ -32,12 +32,13 @@ type CurrencyJournal struct {
 
 type Currency struct {
 	Code            string
-	CrossOrder      int
+	CrossOrder      int64
 	CurrencyCode    string
-	Unit            string
+	Unit            int64
 	CurrencyNameTR  string
 	CurrencyName    string
 	ForexBuying     float64
+	ForexSelling    float64
 	BanknoteBuying  float64
 	BanknoteSelling float64
 	CrossRateUSD    float64
@@ -65,6 +66,7 @@ type currency struct {
 	Isim            string `xml:"Isim"`
 	CurrencyName    string `xml:"CurrencyName"`
 	ForexBuying     string `xml:"ForexBuying"`
+	ForexSelling    string `xml:"ForexSelling"`
 	BanknoteBuying  string `xml:"BanknoteBuying"`
 	BanknoteSelling string `xml:"BanknoteSelling"`
 	CrossRateUSD    string `xml:"CrossRateUSD"`
@@ -161,10 +163,16 @@ func (c *tarih_Date) getArchive(CurrencyDate time.Time) (*CurrencyJournal) {
 			cj.Currencies = make([]Currency, len(tarih.Currency))
 			for i, curr := range tarih.Currency {
 				cj.Currencies[i].Code = curr.CurrencyCode
-
+				cj.Currencies[i].CurrencyName = curr.CurrencyName
+				cj.Currencies[i].CurrencyNameTR = curr.Isim
 				cj.Currencies[i].BanknoteBuying, _ = strconv.ParseFloat(curr.BanknoteBuying, 64)
 				cj.Currencies[i].BanknoteSelling, _ = strconv.ParseFloat(curr.BanknoteSelling, 64)
-				cj.Currencies[i].CrossOrder,_= strconv.ParseInt(curr.CrossOrder, 10, 64)
+				cj.Currencies[i].ForexBuying, _ = strconv.ParseFloat(curr.ForexBuying, 64)
+				cj.Currencies[i].ForexSelling, _ = strconv.ParseFloat(curr.ForexSelling, 64)
+				cj.Currencies[i].CrossOrder, _ = strconv.ParseInt(curr.CrossOrder, 10, 32)
+				cj.Currencies[i].CrossRateOther, _ = strconv.ParseFloat(curr.CrossRateOther, 64)
+				cj.Currencies[i].CrossRateUSD, _ = strconv.ParseFloat(curr.CrossRateUSD, 64)
+				cj.Currencies[i].Unit, _ = strconv.ParseInt(curr.CrossOrder, 10, 32)
 			}
 
 			break
