@@ -5,8 +5,8 @@
 *
 *
 *
-* Date      : 12/12/2016    
-* Time      : 22:18
+* Date      : 15/12/2016    
+* Time      : 18:22
 * Developer : ibrahimcobani
 *
 *******/
@@ -20,17 +20,44 @@ import (
 	"io"
 	"bytes"
 	"strings"
+	"strconv"
 )
 
-type Tarih_Date struct {
+type CurrencyJournal struct {
+	DateTR     string
+	Date       string
+	JournalNo  string
+	Currencies []Currency
+}
+
+type Currency struct {
+	Code            string
+	CrossOrder      int
+	CurrencyCode    string
+	Unit            string
+	CurrencyNameTR  string
+	CurrencyName    string
+	ForexBuying     float64
+	BanknoteBuying  float64
+	BanknoteSelling float64
+	CrossRateUSD    float64
+	CrossRateOther  float64
+}
+
+func (c *CurrencyJournal) GetArchive(CurrencyDate time.Time) (*CurrencyJournal) {
+	t := new(tarih_Date)
+	return t.getArchive(CurrencyDate)
+}
+
+type tarih_Date struct {
 	XMLName   xml.Name `xml:"Tarih_Date"`
 	Tarih     string `xml:"Tarih,attr"`
 	Date      string `xml:"Date,attr"`
 	Bulten_No string `xml:"Bulten_No,attr"`
-	Currency  []Currency `xml:"Currency"`
+	Currency  []currency `xml:"Currency"`
 }
 
-type Currency struct {
+type currency struct {
 	Kod             string `xml:"Kod,attr"`
 	CrossOrder      string `xml:"CrossOrder,attr"`
 	CurrencyCode    string `xml:"CurrencyCode,attr"`
@@ -108,44 +135,44 @@ func CharsetReader(charset string, input io.Reader) (io.Reader, error) {
 
 //********************
 
-
-func (c *Tarih_Date) GetToday(CurrencyDate time.Time) {
-
+func (c *tarih_Date) getArchive(CurrencyDate time.Time) (*CurrencyJournal) {
+	cj := new(CurrencyJournal)
 	for {
+		cj = new(CurrencyJournal)
 		url := "http://www.tcmb.gov.tr/kurlar/" + CurrencyDate.Format("200601") + "/" + CurrencyDate.Format("02012006") + ".xml"
 		println(url)
 		resp, err := http.Get(url)
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusNotFound {
-
-			//body, err2 := ioutil.ReadAll(resp.Body)
-			//println(err2 != nil)
-			//if err2 != nil {
-			//	fmt.Println("=>", err2)
-			//}
-			tarih := new(Tarih_Date)
-			//fmt.Println(&body)
-
+			tarih := new(tarih_Date)
 			d := xml.NewDecoder(resp.Body)
 			d.CharsetReader = CharsetReader
-			//marshalErr := xml.Unmarshal(body, &tarih)
 			marshalErr := d.Decode(&tarih)
 			if marshalErr != nil {
 				fmt.Printf("error: %v", marshalErr)
-				return
+				//cj := new(CurrencyJournal)
 			}
-			c = &Tarih_Date{}
-			fmt.Println(tarih.Date, tarih.Bulten_No)
-			fmt.Println("------------------")
-			for _, curr := range tarih.Currency {
-				fmt.Println(curr.Kod, curr.Isim, curr.ForexBuying)
+			c = &tarih_Date{}
+
+			cj.Date = tarih.Date
+			cj.DateTR = tarih.Tarih
+			cj.JournalNo = tarih.Bulten_No
+			cj.Currencies = make([]Currency, len(tarih.Currency))
+			for i, curr := range tarih.Currency {
+				cj.Currencies[i].Code = curr.CurrencyCode
+
+				cj.Currencies[i].BanknoteBuying, _ = strconv.ParseFloat(curr.BanknoteBuying, 64)
+				cj.Currencies[i].BanknoteSelling, _ = strconv.ParseFloat(curr.BanknoteSelling, 64)
+				cj.Currencies[i].CrossOrder,_= strconv.ParseInt(curr.CrossOrder, 10, 64)
 			}
+
 			break
 		} else {
 			println(err)
 			CurrencyDate = CurrencyDate.AddDate(0, 0, -1)
 		}
-
 	}
+
+	return cj
 }
