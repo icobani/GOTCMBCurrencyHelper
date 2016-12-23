@@ -15,26 +15,28 @@ package GOTCMBCurrencyHelper
 import (
 	"net/http"
 	"encoding/xml"
-	"fmt"
+	//"fmt"
 	"time"
 	"io"
 	"bytes"
 	"strings"
 	"strconv"
+	"log"
+	"github.com/icobani/GOTCMBCurrencyHelper/config"
+	"fmt"
 )
 
 type CurrencyJournal struct {
-	DateTR     string
-	Date       string
+	Id         string `json:"_id" bson:"_id"`
+	Date       time.Time
 	JournalNo  string
 	Currencies []Currency
 }
 
 type Currency struct {
 	Code            string
-	CrossOrder      int64
-	CurrencyCode    string
-	Unit            int64
+	CrossOrder      int
+	Unit            int
 	CurrencyNameTR  string
 	CurrencyName    string
 	ForexBuying     float64
@@ -45,9 +47,21 @@ type Currency struct {
 	CrossRateOther  float64
 }
 
-func (c *CurrencyJournal) GetArchive(CurrencyDate time.Time) (*CurrencyJournal) {
+func (c *CurrencyJournal) GetArchive(CurrencyDate time.Time) {
+	ghostDate := CurrencyDate
 	t := new(tarih_Date)
-	return t.getArchive(CurrencyDate)
+	cj := t.getArchive(CurrencyDate, ghostDate)
+	for {
+		if (cj == nil) {
+			CurrencyDate = CurrencyDate.AddDate(0, 0, -1)
+			cj := t.getArchive(CurrencyDate, ghostDate)
+			if cj != nil {
+				break
+			}
+		} else {
+			break
+		}
+	}
 }
 
 type tarih_Date struct {
@@ -137,50 +151,65 @@ func CharsetReader(charset string, input io.Reader) (io.Reader, error) {
 
 //********************
 
-func (c *tarih_Date) getArchive(CurrencyDate time.Time) (*CurrencyJournal) {
-	cj := new(CurrencyJournal)
-	for {
-		cj = new(CurrencyJournal)
-		url := "http://www.tcmb.gov.tr/kurlar/" + CurrencyDate.Format("200601") + "/" + CurrencyDate.Format("02012006") + ".xml"
-		println(url)
-		resp, err := http.Get(url)
-		defer resp.Body.Close()
 
+func (c *tarih_Date) getArchive(CurrencyDate time.Time, GhostDate time.Time) (*CurrencyJournal) {
+	cj := new(CurrencyJournal)
+	var resp *http.Response
+	var err error
+	var url string
+	//	for {
+	cj = new(CurrencyJournal)
+	url = "http://www.tcmb.gov.tr/kurlar/" + CurrencyDate.Format("200601") + "/" + CurrencyDate.Format("02012006") + ".xml"
+	//println(url)
+
+	resp, err = http.Get(url)
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusNotFound {
 			tarih := new(tarih_Date)
 			d := xml.NewDecoder(resp.Body)
 			d.CharsetReader = CharsetReader
 			marshalErr := d.Decode(&tarih)
 			if marshalErr != nil {
-				fmt.Printf("error: %v", marshalErr)
+				log.Printf("error: %v", marshalErr)
 				//cj := new(CurrencyJournal)
 			}
 			c = &tarih_Date{}
-
-			cj.Date = tarih.Date
-			cj.DateTR = tarih.Tarih
+			cj.Id = GhostDate.Format("20060102")
+			cj.Date = GhostDate
 			cj.JournalNo = tarih.Bulten_No
 			cj.Currencies = make([]Currency, len(tarih.Currency))
 			for i, curr := range tarih.Currency {
 				cj.Currencies[i].Code = curr.CurrencyCode
 				cj.Currencies[i].CurrencyName = curr.CurrencyName
 				cj.Currencies[i].CurrencyNameTR = curr.Isim
-				cj.Currencies[i].BanknoteBuying, _ = strconv.ParseFloat(curr.BanknoteBuying, 64)
-				cj.Currencies[i].BanknoteSelling, _ = strconv.ParseFloat(curr.BanknoteSelling, 64)
-				cj.Currencies[i].ForexBuying, _ = strconv.ParseFloat(curr.ForexBuying, 64)
-				cj.Currencies[i].ForexSelling, _ = strconv.ParseFloat(curr.ForexSelling, 64)
-				cj.Currencies[i].CrossOrder, _ = strconv.ParseInt(curr.CrossOrder, 10, 32)
-				cj.Currencies[i].CrossRateOther, _ = strconv.ParseFloat(curr.CrossRateOther, 64)
-				cj.Currencies[i].CrossRateUSD, _ = strconv.ParseFloat(curr.CrossRateUSD, 64)
-				cj.Currencies[i].Unit, _ = strconv.ParseInt(curr.CrossOrder, 10, 32)
+				cj.Currencies[i].BanknoteBuying, err = strconv.ParseFloat(curr.BanknoteBuying, 64)
+				cj.Currencies[i].BanknoteSelling, err = strconv.ParseFloat(curr.BanknoteSelling, 64)
+				cj.Currencies[i].ForexBuying, err = strconv.ParseFloat(curr.ForexBuying, 64)
+				cj.Currencies[i].ForexSelling, err = strconv.ParseFloat(curr.ForexSelling, 64)
+				cj.Currencies[i].CrossOrder, err = strconv.Atoi(curr.CrossOrder)
+				cj.Currencies[i].CrossRateOther, err = strconv.ParseFloat(curr.CrossRateOther, 64)
+				cj.Currencies[i].CrossRateUSD, err = strconv.ParseFloat(curr.CrossRateUSD, 64)
+				cj.Currencies[i].Unit, err = strconv.Atoi(curr.Unit)
 			}
+			if err := config.M.DB(*config.DbName).C("Currency Exchange Rate").Insert(&cj); err != nil {
+				log.Println(err)
+			}
+			//			break
+			//		} else {
+			//			log.Println("err : ", err, resp.Status)
+			//			CurrencyDate = CurrencyDate.AddDate(0, 0, -1)
+			//			defer resp.Body.Close()
+			//		}
 
-			break
 		} else {
-			println(err)
-			CurrencyDate = CurrencyDate.AddDate(0, 0, -1)
+			cj = nil
 		}
-	}
 
+	}
+	//fmt.Println(cj.Currencies[0].CurrencyNameTR)
 	return cj
 }
