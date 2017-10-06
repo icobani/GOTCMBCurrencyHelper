@@ -10,13 +10,11 @@ import (
 	"time"
 	"fmt"
 	"runtime"
-	"github.com/icobani/GOTCMBCurrencyHelper/config"
 )
 
 func Test(t *testing.T) {
 	runtime.GOMAXPROCS(2)
 	startTime := time.Now()
-	config.Load()
 	currencyJournal := new(CurrencyJournal)
 	CurrencyDate, _ := time.Parse("02-01-2006", "16-04-1996")
 	CurrencyDate, _ = time.Parse("02-01-2006", "01-01-2014")
@@ -41,7 +39,6 @@ func Test(t *testing.T) {
 
 	for durationDay > 0 {
 		time.Sleep(10 * time.Millisecond)
-		//println(durationDay)
 	}
 
 	elepsedTime := time.Since(startTime)

@@ -15,14 +15,12 @@ package GOTCMBCurrencyHelper
 import (
 	"net/http"
 	"encoding/xml"
-	//"fmt"
 	"time"
 	"io"
 	"bytes"
 	"strings"
 	"strconv"
 	"log"
-	"github.com/icobani/GOTCMBCurrencyHelper/config"
 	"fmt"
 )
 
@@ -195,15 +193,7 @@ func (c *tarih_Date) getArchive(CurrencyDate time.Time, GhostDate time.Time) (*C
 				cj.Currencies[i].CrossRateUSD, err = strconv.ParseFloat(curr.CrossRateUSD, 64)
 				cj.Currencies[i].Unit, err = strconv.Atoi(curr.Unit)
 			}
-			if err := config.M.DB(*config.DbName).C("Currency Exchange Rate").Insert(&cj); err != nil {
-				log.Println(err)
-			}
-			//			break
-			//		} else {
-			//			log.Println("err : ", err, resp.Status)
-			//			CurrencyDate = CurrencyDate.AddDate(0, 0, -1)
-			//			defer resp.Body.Close()
-			//		}
+
 
 		} else {
 			cj = nil
