@@ -21,7 +21,6 @@ import (
 	"strings"
 	"strconv"
 	"log"
-	"fmt"
 )
 
 type CurrencyJournal struct {
@@ -45,28 +44,29 @@ type Currency struct {
 	CrossRateOther  float64
 }
 
-func (c *CurrencyJournal) GetArchive(CurrencyDate time.Time) {
+func GetArchive(CurrencyDate time.Time) CurrencyJournal {
 	ghostDate := CurrencyDate
 	t := new(tarih_Date)
 	cj := t.getArchive(CurrencyDate, ghostDate)
 	for {
-		if (cj == nil) {
+		if (cj.Id == "") {
 			CurrencyDate = CurrencyDate.AddDate(0, 0, -1)
-			cj := t.getArchive(CurrencyDate, ghostDate)
-			if cj != nil {
+			cj = t.getArchive(CurrencyDate, ghostDate)
+			if (cj.Id != "") {
 				break
 			}
 		} else {
 			break
 		}
 	}
+	return cj
 }
 
 type tarih_Date struct {
-	XMLName   xml.Name `xml:"Tarih_Date"`
-	Tarih     string `xml:"Tarih,attr"`
-	Date      string `xml:"Date,attr"`
-	Bulten_No string `xml:"Bulten_No,attr"`
+	XMLName   xml.Name   `xml:"Tarih_Date"`
+	Tarih     string     `xml:"Tarih,attr"`
+	Date      string     `xml:"Date,attr"`
+	Bulten_No string     `xml:"Bulten_No,attr"`
 	Currency  []currency `xml:"Currency"`
 }
 
@@ -84,7 +84,6 @@ type currency struct {
 	CrossRateUSD    string `xml:"CrossRateUSD"`
 	CrossRateOther  string `xml:"CrossRateOther"`
 }
-
 
 //*********************
 
@@ -149,21 +148,17 @@ func CharsetReader(charset string, input io.Reader) (io.Reader, error) {
 
 //********************
 
-
-func (c *tarih_Date) getArchive(CurrencyDate time.Time, GhostDate time.Time) (*CurrencyJournal) {
-	cj := new(CurrencyJournal)
+func (c *tarih_Date) getArchive(CurrencyDate time.Time, GhostDate time.Time) CurrencyJournal {
+	cj := CurrencyJournal{}
 	var resp *http.Response
 	var err error
 	var url string
-	//	for {
-	cj = new(CurrencyJournal)
 	url = "http://www.tcmb.gov.tr/kurlar/" + CurrencyDate.Format("200601") + "/" + CurrencyDate.Format("02012006") + ".xml"
-	//println(url)
-
+	log.Println(url)
 	resp, err = http.Get(url)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	} else {
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusNotFound {
@@ -173,7 +168,6 @@ func (c *tarih_Date) getArchive(CurrencyDate time.Time, GhostDate time.Time) (*C
 			marshalErr := d.Decode(&tarih)
 			if marshalErr != nil {
 				log.Printf("error: %v", marshalErr)
-				//cj := new(CurrencyJournal)
 			}
 			c = &tarih_Date{}
 			cj.Id = GhostDate.Format("20060102")
@@ -194,12 +188,10 @@ func (c *tarih_Date) getArchive(CurrencyDate time.Time, GhostDate time.Time) (*C
 				cj.Currencies[i].Unit, err = strconv.Atoi(curr.Unit)
 			}
 
-
 		} else {
-			cj = nil
+			cj = CurrencyJournal{}
 		}
 
 	}
-	//fmt.Println(cj.Currencies[0].CurrencyNameTR)
 	return cj
 }
