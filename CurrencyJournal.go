@@ -61,7 +61,8 @@ func GetArchive(CurrencyDate time.Time) CurrencyJournal {
 		} else {
 			break
 		}
-		if numberOfTrial > MaxnumberOfTrial {
+		current_time := time.Now().Local()
+		if (numberOfTrial > MaxnumberOfTrial) || (CurrencyDate.After(current_time) ){
 			break
 		}
 	}
