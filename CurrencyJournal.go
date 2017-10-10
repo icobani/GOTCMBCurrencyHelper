@@ -45,10 +45,13 @@ type Currency struct {
 }
 
 func GetArchive(CurrencyDate time.Time) CurrencyJournal {
+	numberOfTrial := 0
+	MaxnumberOfTrial := 30
 	ghostDate := CurrencyDate
 	t := new(tarih_Date)
 	cj := t.getArchive(CurrencyDate, ghostDate)
 	for {
+		numberOfTrial +=1
 		if (cj.Id == "") {
 			CurrencyDate = CurrencyDate.AddDate(0, 0, -1)
 			cj = t.getArchive(CurrencyDate, ghostDate)
@@ -56,6 +59,9 @@ func GetArchive(CurrencyDate time.Time) CurrencyJournal {
 				break
 			}
 		} else {
+			break
+		}
+		if numberOfTrial > MaxnumberOfTrial {
 			break
 		}
 	}
