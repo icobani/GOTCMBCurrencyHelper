@@ -2,11 +2,11 @@
 Currency Helper for TCMB Currency Service
 
 
-  #####go-get github.com/icobani/GOTCMBCurrencyHelper.git
+  `go-get github.com/icobani/GOTCMBCurrencyHelper.git`
 
 
 
-    import (
+    `import (
       "github.com/gin-gonic/gin"
       "net/http"
       "time"
@@ -39,4 +39,4 @@ Currency Helper for TCMB Currency Service
           config.DB.Create(&form)
           form = models.ExchangeRate{}
       }
-    }
+    }`
