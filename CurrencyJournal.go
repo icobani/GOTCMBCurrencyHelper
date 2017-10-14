@@ -176,6 +176,7 @@ func (c *tarih_Date) getArchive(CurrencyDate time.Time, GhostDate time.Time) Cur
 			if marshalErr != nil {
 				log.Printf("error: %v", marshalErr)
 			}
+
 			c = &tarih_Date{}
 			cj.Id = GhostDate.Format("20060102")
 			cj.Date = GhostDate

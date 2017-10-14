@@ -19,6 +19,7 @@ func Test(t *testing.T) {
 	CurrencyDate, _ := time.Parse("02-01-2006", "16-04-1996")
 	CurrencyDate, _ = time.Parse("02-01-2006", "01-01-2014")
 
+
 	var durationDay int = 0;
 
 	for CurrencyDate.Before(time.Now()) {
