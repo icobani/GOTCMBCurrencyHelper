@@ -5,7 +5,7 @@
 *
 *
 *
-* Date      : 15/12/2016    
+* Date      : 15/12/2016
 * Time      : 18:22
 * Developer : ibrahimcobani
 *
@@ -13,14 +13,14 @@
 package GOTCMBCurrencyHelper
 
 import (
-	"net/http"
-	"encoding/xml"
-	"time"
-	"io"
 	"bytes"
-	"strings"
-	"strconv"
+	"encoding/xml"
+	"io"
 	"log"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type CurrencyJournal struct {
@@ -51,18 +51,18 @@ func GetArchive(CurrencyDate time.Time) CurrencyJournal {
 	t := new(tarih_Date)
 	cj := t.getArchive(CurrencyDate, ghostDate)
 	for {
-		numberOfTrial +=1
-		if (cj.Id == "") {
+		numberOfTrial += 1
+		if cj.Id == "" {
 			CurrencyDate = CurrencyDate.AddDate(0, 0, -1)
 			cj = t.getArchive(CurrencyDate, ghostDate)
-			if (cj.Id != "") {
+			if cj.Id != "" {
 				break
 			}
 		} else {
 			break
 		}
 		current_time := time.Now().Local()
-		if (numberOfTrial > MaxnumberOfTrial) || (CurrencyDate.After(current_time) ){
+		if (numberOfTrial > MaxnumberOfTrial) || (CurrencyDate.After(current_time)) {
 			break
 		}
 	}
@@ -161,7 +161,7 @@ func (c *tarih_Date) getArchive(CurrencyDate time.Time, GhostDate time.Time) Cur
 	var err error
 	var url string
 	url = "http://www.tcmb.gov.tr/kurlar/" + CurrencyDate.Format("200601") + "/" + CurrencyDate.Format("02012006") + ".xml"
-	log.Println(url)
+	//log.Println(url)
 	resp, err = http.Get(url)
 
 	if err != nil {
