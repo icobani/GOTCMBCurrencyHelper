@@ -2,7 +2,7 @@
 Currency Helper for TCMB Currency Service
 
 
-  `go-get github.com/icobani/GOTCMBCurrencyHelper`
+  `go get github.com/icobani/GOTCMBCurrencyHelper`
 
 
 
